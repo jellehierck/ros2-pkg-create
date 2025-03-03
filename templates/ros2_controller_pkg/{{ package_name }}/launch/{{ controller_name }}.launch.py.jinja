@@ -1,0 +1,97 @@
+from pathlib import Path
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument, Shutdown
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, TextSubstitution
+from launch_ros.actions import Node
+
+
+def generate_launch_description() -> LaunchDescription:
+    """Bring up the Franka robot for the hand-eye calibration."""
+    # ---------- Define common paths ----------
+
+    default_controller_manager_config_path = str(
+        Path(get_package_share_directory("{{ package_name }}")) / "config" / "controller_manager.yaml"
+    )
+
+    default_{{ controller_name }}_config_path = str(
+        Path(get_package_share_directory("{{ package_name }}")) / "config" / "{{ controller_name }}.yaml"
+    )
+
+    # ---------- Declare launch arguments ----------
+
+    launch_args = []
+
+    start_controller_manager_arg = DeclareLaunchArgument(
+        "start_controller_manager",
+        default_value="true",
+        description="(bool) Whether to start the controller manager using this launch file. Set to false if you want "
+        "to include into another launch file which already starts a controller manager.",
+        choices=["true", "false"],
+    )
+    launch_args.append(start_controller_manager_arg)
+
+    # Specify the parameter configuration file path for the controller manager
+    controller_manager_config_path_arg = DeclareLaunchArgument(
+        "controller_manager_config_path",
+        default_value=TextSubstitution(text=default_controller_manager_config_path),
+        description="(string) Path to the parameter configuration file for the controller manager.",
+    )
+    launch_args.append(controller_manager_config_path_arg)
+
+    # Specify the parameter configuration file path for {{ controller_name }}
+    {{ controller_name }}_config_path_arg = DeclareLaunchArgument(
+        "{{ controller_name }}_config_path",
+        default_value=TextSubstitution(text=default_{{ controller_name }}_config_path),
+        description="(string) Path to the parameter configuration file for {{ controller_name }}.",
+    )
+    launch_args.append({{ controller_name }}_config_path_arg)
+
+    # ---------- Declare executables ----------
+
+    # Include the Franka bringup file to start all state reading nodes but not any controllers. This will allow manual
+    # movement of the robot.
+
+    # Note: we do not wrap this launch description into a GroupAction because we want to allow setting the Franka launch
+    # arguments from the command line.
+    # TODO: Consider still wrapping into a scoped GroupAction to prevent "leaking" the Franka launch arguments.
+    controller_manager_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            LaunchConfiguration(controller_manager_config_path_arg.name),
+        ],
+        output={
+            "stdout": "screen",
+            "stderr": "screen",
+        },
+        on_exit=Shutdown(),
+        condition=IfCondition(LaunchConfiguration(start_controller_manager_arg.name)),
+    )
+
+    {# TODO: Make sure the controller manager obtains a URDF because it will not start without one #}
+
+    # Controller spawner executable
+    {{ controller_name }}_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "{{ controller_name }}",
+            # "--inactive",  # Optional: when enabled, load and configure the controller but do not activate
+            "--param-file",
+            LaunchConfiguration({{ controller_name }}_config_path_arg.name),
+        ],
+        output="screen",
+    )
+
+    # ---------- Construct launch description ----------
+
+    return LaunchDescription(
+        [
+            *launch_args,  # Unpack the launch arguments
+            controller_manager_node,
+            {{ controller_name }}_spawner,
+        ]
+    )
