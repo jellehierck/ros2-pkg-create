@@ -21,9 +21,7 @@ namespace {{ package_name }} {
   controller_interface::InterfaceConfiguration {{ controller_class_name }}::command_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
 
-  // TODO: Make some general example (though maybe Franka robot is a general enough?)
-  // TODO: Add constants needed in this function to .hpp file
-  // TODO: Replace with semantic component (only works if we use Franka controller)
+  {# TODO: Make some general example OR use Franka semantic components #}
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   for (size_t index = 1; index <= N_JOINTS; index++) {
     config.names.push_back("fr3_joint" + std::to_string(index) + "/effort");
@@ -35,8 +33,7 @@ namespace {{ package_name }} {
 controller_interface::InterfaceConfiguration {{ controller_class_name }}::state_interface_configuration() const {
   controller_interface::InterfaceConfiguration config;
 
-  // TODO: Make some general example (though maybe Franka robot is a general enough?)
-  // TODO: Add constants needed in this function to .hpp file
+  {# TODO: Make some general example OR use Franka semantic components #}
   config.type = controller_interface::interface_configuration_type::INDIVIDUAL;
   for (size_t index = 1; index <= N_JOINTS; index++) {
     config.names.push_back("fr3_joint" + std::to_string(index) + "/position");
@@ -48,8 +45,7 @@ controller_interface::InterfaceConfiguration {{ controller_class_name }}::state_
 
 controller_interface::CallbackReturn {{ controller_class_name }}::on_init() {
   try {
-    // TODO: Make some general example (though maybe Franka robot is a general enough?) e.g. accept joint names and types (https://github.com/ros-controls/ros2_controllers/blob/humble/forward_command_controller/include/forward_command_controller/forward_command_controller.hpp)
-    // TODO: Generate parameters with generate_parameter_library? (common in ros2_controllers repo) (https://github.com/PickNikRobotics/generate_parameter_library)
+    {# TODO: Generate parameters with generate_parameter_library (https://github.com/PickNikRobotics/generate_parameter_library) #}
     auto_declare<std::vector<double>>("k_gains", {});
     auto_declare<std::vector<double>>("d_gains", {});
     auto_declare<double>("velocity_filter_alpha_gain", 0.99);
@@ -117,7 +113,6 @@ controller_interface::CallbackReturn {{ controller_class_name }}::on_configure(
     fprintf(
       stderr, "Exception thrown during subscription creation at configure stage with message : %s \n",
       e.what());
-    // TODO: Check if we should return ERROR or FAILURE
     return controller_interface::CallbackReturn::ERROR;
   }
 
@@ -132,7 +127,6 @@ controller_interface::CallbackReturn {{ controller_class_name }}::on_configure(
     fprintf(
       stderr, "Exception thrown during publisher creation at configure stage with message : %s \n",
       e.what());
-    // TODO: Check if we should return ERROR or FAILURE
     return controller_interface::CallbackReturn::ERROR;
   }
 
@@ -204,7 +198,7 @@ controller_interface::return_type {{ controller_class_name }}::update(
   for (size_t index = 0; index < N_JOINTS; index++) {
     // This is currently a pretty "dumb" way to obtain Franka states, but we assume 
     // that every even state interface is a position and every odd is velocity.
-    // TODO: Use semantic components to obtain states instead
+    {# TODO: Use semantic components to obtain states instead #}
     const auto &position_interface = state_interfaces_.at(2 * index);
     const auto &velocity_interface = state_interfaces_.at(2 * index + 1);
 
