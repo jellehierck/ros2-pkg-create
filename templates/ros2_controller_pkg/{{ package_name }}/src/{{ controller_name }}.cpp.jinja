@@ -275,6 +275,7 @@ controller_interface::return_type {{ controller_class_name }}::update(
   // Also publish the commanded state to the real time publisher
   if (realtime_publisher_ && realtime_publisher_->trylock()) {
     realtime_publisher_->msg_.header.stamp = time;
+    realtime_publisher_->msg_.data = std::vector<double>(N_JOINTS, 0.0);
     for (size_t index = 0ul; index < N_JOINTS; ++index) {
       realtime_publisher_->msg_.data[index] = commanded_joint_torques(static_cast<int>(index));
     }
