@@ -169,7 +169,7 @@ controller_name:
   help: Controller name
   when: "{{ template == 'ros2_controller_pkg' }}"
   type: str
-  # default: "my_controller"
+  default: "my_controller"
 
 controller_class_name:
   help: Class name of controller
